@@ -1,26 +1,26 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 
 public partial class StarfieldGenerator : Node2D
 {
-    [Export] public int NumberOfLayers = 3;
-    [Export] public int StarsPerLayer = 150;
-    [Export] public float BaseParallaxSpeed = 0.3f;
-    [Export] public float LayerSpeedMultiplier = 0.5f;
+    [Export] public int StarCount = 400;
+    [Export(PropertyHint.Range, "0.001,0.1,0.001")] public float DistantParallaxFactor = 0.02f;
+    [Export(PropertyHint.Range, "1.0,4.0,0.1")] public float DistantStarSize = 2.5f;
+    [Export(PropertyHint.Range, "0.0,1.0,0.01")] public float DistantStarSizeJitter = 0.2f;
+    [Export(PropertyHint.Range, "0.0,0.5,0.01")] public float DistantStarBrightnessJitter = 0.15f;
+    [Export] public Color DistantStarColor = Colors.White;
     [Export] public int BackgroundZIndex = -10000;
     [Export] public bool UseAbsoluteZIndex = true;
 
     private class StarLayer
     {
-        public Vector2[] Stars;
+        public Vector2[] Stars = Array.Empty<Vector2>();
+        public Color[] StarColors = Array.Empty<Color>();
+        public float[] StarSizes = Array.Empty<float>();
         public float ParallaxSpeed;
-        public Color StarColor;
-        public float StarSize;
-        public Vector2 Offset;
     }
 
-    private StarLayer[] _layers;
+    private StarLayer _farLayer;
     private CameraController _camera;
     private Vector2 _lastCameraPos;
 
@@ -44,48 +44,50 @@ public partial class StarfieldGenerator : Node2D
             }
         }
 
-        GenerateStarLayers();
+        GenerateFarLayer();
         _lastCameraPos = _camera?.GlobalPosition ?? Vector2.Zero;
     }
 
-    private void GenerateStarLayers()
+    private void GenerateFarLayer()
     {
-        _layers = new StarLayer[NumberOfLayers];
-
-        for (int layerIndex = 0; layerIndex < NumberOfLayers; layerIndex++)
+        _farLayer = new StarLayer
         {
-            var layer = new StarLayer();
-            layer.Stars = new Vector2[StarsPerLayer];
-            layer.ParallaxSpeed = BaseParallaxSpeed * (layerIndex + 1) * LayerSpeedMultiplier;
-            layer.Offset = Vector2.Zero;
+            Stars = new Vector2[StarCount],
+            StarColors = new Color[StarCount],
+            StarSizes = new float[StarCount],
+            ParallaxSpeed = DistantParallaxFactor
+        };
 
-            // Vary color and size by layer (farther layers are dimmer and smaller)
-            float layerBrightness = 1.0f - (layerIndex * 0.3f);
-            layer.StarColor = new Color(layerBrightness, layerBrightness, layerBrightness, 1.0f);
-            layer.StarSize = Mathf.Max(1.0f, 3.0f - (layerIndex * 1.0f)); // Crisp pixel sizes
+        Random random = new Random(1);
 
-            Random random = new Random(layerIndex); // Different seed per layer
+        for (int starIndex = 0; starIndex < StarCount; starIndex++)
+        {
+            // Generate stars within a large area that covers the visible space plus margin
+            float zoom = _camera?.Zoom.X ?? 1.0f;
+            Vector2 viewportSize = GetViewportRect().Size;
+            Vector2 visibleSize = viewportSize / zoom;
 
-            for (int starIndex = 0; starIndex < StarsPerLayer; starIndex++)
-            {
-                // Generate stars within a large area that covers the visible space plus margin
-                float zoom = _camera?.Zoom.X ?? 1.0f;
-                Vector2 viewportSize = GetViewportRect().Size;
-                Vector2 visibleSize = viewportSize / zoom;
+            _farLayer.Stars[starIndex] = new Vector2(
+                (float)random.NextDouble() * visibleSize.X * 4 - visibleSize.X * 2,
+                (float)random.NextDouble() * visibleSize.Y * 4 - visibleSize.Y * 2
+            );
 
-                layer.Stars[starIndex] = new Vector2(
-                    (float)random.NextDouble() * visibleSize.X * 4 - visibleSize.X * 2,
-                    (float)random.NextDouble() * visibleSize.Y * 4 - visibleSize.Y * 2
-                );
-            }
+            float sizeVariation = Mathf.Clamp(DistantStarSizeJitter, 0.0f, 1.0f) * DistantStarSize;
+            float sizeMin = Mathf.Max(1.0f, DistantStarSize - sizeVariation);
+            float sizeMax = DistantStarSize + sizeVariation;
+            _farLayer.StarSizes[starIndex] = Mathf.Lerp(sizeMin, sizeMax, (float)random.NextDouble());
 
-            _layers[layerIndex] = layer;
+            float brightnessVariation = Mathf.Clamp(DistantStarBrightnessJitter, 0.0f, 1.0f);
+            float brightnessMin = Mathf.Max(0.0f, 1.0f - brightnessVariation);
+            float brightnessMax = 1.0f + brightnessVariation;
+            float brightness = Mathf.Lerp(brightnessMin, brightnessMax, (float)random.NextDouble());
+            _farLayer.StarColors[starIndex] = DistantStarColor * brightness;
         }
     }
 
     public override void _Draw()
     {
-        if (_layers == null) return;
+        if (_farLayer?.Stars == null || _farLayer.Stars.Length == 0) return;
 
         Vector2 cameraPos = _camera?.GlobalPosition ?? Vector2.Zero;
 
@@ -102,23 +104,20 @@ public partial class StarfieldGenerator : Node2D
         DrawRect(new Rect2(bgPos, bgSize), Colors.Black);
 
         // Draw stars for each layer
-        foreach (var layer in _layers)
+        Vector2 parallaxOffset = cameraPos * _farLayer.ParallaxSpeed;
+
+        for (int i = 0; i < _farLayer.Stars.Length; i++)
         {
-            Vector2 parallaxOffset = cameraPos * layer.ParallaxSpeed;
+            Vector2 starPos = _farLayer.Stars[i] + parallaxOffset;
 
-            for (int i = 0; i < layer.Stars.Length; i++)
-            {
-                Vector2 starPos = layer.Stars[i] + parallaxOffset;
+            // Wrap stars around the visible area for infinite scrolling effect
+            Vector2 wrappedPos = new Vector2(
+                Wrap(starPos.X, cameraPos.X - visibleSize.X * 1.5f, cameraPos.X + visibleSize.X * 1.5f),
+                Wrap(starPos.Y, cameraPos.Y - visibleSize.Y * 1.5f, cameraPos.Y + visibleSize.Y * 1.5f)
+            );
 
-                // Wrap stars around the visible area for infinite scrolling effect
-                Vector2 wrappedPos = new Vector2(
-                    Wrap(starPos.X, cameraPos.X - visibleSize.X * 1.5f, cameraPos.X + visibleSize.X * 1.5f),
-                    Wrap(starPos.Y, cameraPos.Y - visibleSize.Y * 1.5f, cameraPos.Y + visibleSize.Y * 1.5f)
-                );
-
-                // Draw star
-                DrawCircle(wrappedPos, layer.StarSize, layer.StarColor);
-            }
+            // Draw star
+            DrawCircle(wrappedPos, _farLayer.StarSizes[i], _farLayer.StarColors[i]);
         }
     }
 
