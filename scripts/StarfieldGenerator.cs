@@ -105,19 +105,26 @@ public partial class StarfieldGenerator : Node2D
         Vector2 bgPos = -bgSize * 0.5f;
         DrawRect(new Rect2(bgPos, bgSize), Colors.Black);
 
+        // Compensate for camera zoom so the background stays visually fixed while zooming.
+        float inverseZoom = zoom == 0.0f ? 1.0f : 1.0f / zoom;
+        DrawSetTransform(Vector2.Zero, 0.0f, new Vector2(inverseZoom, inverseZoom));
+
         // Since parallax factor is 0, stars are completely static
         // No need for complex wrapping or parallax calculations
         for (int i = 0; i < _farLayer.Stars.Length; i++)
         {
             Vector2 starPos = _farLayer.Stars[i];
-            
+
             // Only draw stars that are within the visible area
-            if (Mathf.Abs(starPos.X) <= visibleSize.X * 0.6f && 
+            if (Mathf.Abs(starPos.X) <= visibleSize.X * 0.6f &&
                 Mathf.Abs(starPos.Y) <= visibleSize.Y * 0.6f)
             {
                 DrawCircle(starPos, _farLayer.StarSizes[i], _farLayer.StarColors[i]);
             }
         }
+
+        // Reset the transform for any potential future drawing calls.
+        DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
     }
 
     private float Wrap(float value, float min, float max)
