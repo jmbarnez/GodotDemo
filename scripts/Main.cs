@@ -35,14 +35,27 @@ public partial class Main : Node2D
 		}
 
 		// Implement world boundaries - clamp player position
-		if (_player != null)
-		{
-			Vector2 halfBounds = WorldBounds / 2;
-			_player.GlobalPosition = new Vector2(
-				Mathf.Clamp(_player.GlobalPosition.X, -halfBounds.X, halfBounds.X),
-				Mathf.Clamp(_player.GlobalPosition.Y, -halfBounds.Y, halfBounds.Y)
-			);
-		}
+                if (_player != null)
+                {
+                        Vector2 halfBounds = WorldBounds / 2;
+                        Vector2 currentPosition = _player.GlobalPosition;
+                        Vector2 clampedPosition = new Vector2(
+                                Mathf.Clamp(currentPosition.X, -halfBounds.X, halfBounds.X),
+                                Mathf.Clamp(currentPosition.Y, -halfBounds.Y, halfBounds.Y)
+                        );
+
+                        if (clampedPosition != currentPosition)
+                        {
+                                _player.GlobalPosition = clampedPosition;
+
+                                if (_player is RigidBody2D rigidBody)
+                                {
+                                        // Stop any existing movement so the physics engine
+                                        // doesn't push the player back out of bounds.
+                                        rigidBody.LinearVelocity = Vector2.Zero;
+                                }
+                        }
+                }
 
 		// Starfield parallax is now handled automatically
 	}
