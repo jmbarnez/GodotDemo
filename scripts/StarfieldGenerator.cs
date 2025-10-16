@@ -23,6 +23,7 @@ public partial class StarfieldGenerator : Node2D
     private StarLayer _farLayer;
     private CameraController _camera;
     private Vector2 _lastCameraPos;
+    private Vector2 _parallaxOrigin;
 
     public override void _Ready()
     {
@@ -44,8 +45,12 @@ public partial class StarfieldGenerator : Node2D
             }
         }
 
+        _parallaxOrigin = _camera?.GlobalPosition ?? Vector2.Zero;
+        GlobalPosition = _parallaxOrigin;
+
         GenerateFarLayer();
-        _lastCameraPos = _camera?.GlobalPosition ?? Vector2.Zero;
+        _lastCameraPos = _parallaxOrigin;
+        QueueRedraw();
     }
 
     private void GenerateFarLayer()
@@ -89,31 +94,34 @@ public partial class StarfieldGenerator : Node2D
     {
         if (_farLayer?.Stars == null || _farLayer.Stars.Length == 0) return;
 
-        Vector2 cameraPos = _camera?.GlobalPosition ?? Vector2.Zero;
-
-        // Draw black background that covers the entire visible area
-        // Use a much larger area to ensure full coverage when stretched
         float zoom = _camera?.Zoom.X ?? 1.0f;
         Vector2 viewportSize = GetViewportRect().Size;
         Vector2 visibleSize = viewportSize / zoom;
 
-        // Make background large enough to cover the entire visible area plus margin
-        float margin = visibleSize.Length() * 2.0f;
+        // Draw black background around the camera origin (node follows the camera)
+        float margin = visibleSize.Length();
         Vector2 bgSize = visibleSize + new Vector2(margin, margin);
-        Vector2 bgPos = cameraPos - bgSize * 0.5f;
+        Vector2 bgPos = -bgSize * 0.5f;
         DrawRect(new Rect2(bgPos, bgSize), Colors.Black);
 
-        // Draw stars for each layer
-        Vector2 parallaxOffset = cameraPos * _farLayer.ParallaxSpeed;
+        // Parallax offset is based on how far the camera has travelled from the origin
+        Vector2 cameraDelta = (_camera?.GlobalPosition ?? Vector2.Zero) - _parallaxOrigin;
+        float parallaxFactor = Mathf.Clamp(_farLayer.ParallaxSpeed, 0.0f, 1.0f);
+        Vector2 parallaxOffset = cameraDelta * parallaxFactor;
+
+        // Wrap bounds in local space (centered on the camera position)
+        float wrapXMin = -visibleSize.X * 1.5f;
+        float wrapXMax = visibleSize.X * 1.5f;
+        float wrapYMin = -visibleSize.Y * 1.5f;
+        float wrapYMax = visibleSize.Y * 1.5f;
 
         for (int i = 0; i < _farLayer.Stars.Length; i++)
         {
-            Vector2 starPos = _farLayer.Stars[i] + parallaxOffset;
+            Vector2 starPos = _farLayer.Stars[i] - parallaxOffset;
 
-            // Wrap stars around the visible area for infinite scrolling effect
             Vector2 wrappedPos = new Vector2(
-                Wrap(starPos.X, cameraPos.X - visibleSize.X * 1.5f, cameraPos.X + visibleSize.X * 1.5f),
-                Wrap(starPos.Y, cameraPos.Y - visibleSize.Y * 1.5f, cameraPos.Y + visibleSize.Y * 1.5f)
+                Wrap(starPos.X, wrapXMin, wrapXMax),
+                Wrap(starPos.Y, wrapYMin, wrapYMax)
             );
 
             // Draw star
@@ -134,9 +142,10 @@ public partial class StarfieldGenerator : Node2D
         if (_camera == null) return;
 
         Vector2 cameraPos = _camera.GlobalPosition;
+        GlobalPosition = cameraPos;
 
-        // Only redraw when camera moves significantly to improve performance
-        if ((cameraPos - _lastCameraPos).Length() > 10.0f)
+        // Always redraw when the camera moves to keep parallax smooth
+        if ((cameraPos - _lastCameraPos).LengthSquared() > 0.01f)
         {
             QueueRedraw();
             _lastCameraPos = cameraPos;
