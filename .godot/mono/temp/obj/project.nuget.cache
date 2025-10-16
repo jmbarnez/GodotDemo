@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "QO7gTDK+jbM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\JBCry\\Desktop\\GodotDemo\\GodotDemo.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\JBCry\\.nuget\\packages\\godot.sourcegenerators\\4.5.1\\godot.sourcegenerators.4.5.1.nupkg.sha512",
+    "C:\\Users\\JBCry\\.nuget\\packages\\godotsharp\\4.5.1\\godotsharp.4.5.1.nupkg.sha512",
+    "C:\\Users\\JBCry\\.nuget\\packages\\godotsharpeditor\\4.5.1\\godotsharpeditor.4.5.1.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,9 @@
+res://scripts/components/PlayerController.cs
+res://scripts/managers/StarfieldManager.cs
+res://scripts/managers/CameraManager.cs
+res://scripts/managers/GameManager.cs
+res://scripts/components/TurretController.cs
+res://scripts/Player.cs
+res://scripts/Main.cs
+res://scripts/CameraController.cs
+res://scripts/StarfieldGenerator.cs

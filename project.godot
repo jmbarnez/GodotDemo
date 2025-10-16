@@ -1,0 +1,93 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Godot Demo"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.5", "C#")
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+
+[rendering]
+
+environment/default_clear_color=000000
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+
+[dotnet]
+
+project/assembly_name="GodotDemo"
+
+[input]
+
+left={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"keycode": 65,
+"physical_keycode": 65,
+"pressed": false,
+"repeat": false,
+"scancode": 65,
+"type": "InputEventKey",
+"unicode": 0,
+"windows_scancode": 30
+}]
+}
+right={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"keycode": 68,
+"physical_keycode": 68,
+"pressed": false,
+"repeat": false,
+"scancode": 68,
+"type": "InputEventKey",
+"unicode": 0,
+"windows_scancode": 32
+}]
+}
+up={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"keycode": 87,
+"physical_keycode": 87,
+"pressed": false,
+"repeat": false,
+"scancode": 87,
+"type": "InputEventKey",
+"unicode": 0,
+"windows_scancode": 17
+}]
+}
+down={
+"deadzone": 0.5,
+"events": [{
+"device": 0,
+"keycode": 83,
+"physical_keycode": 83,
+"pressed": false,
+"repeat": false,
+"scancode": 83,
+"type": "InputEventKey",
+"unicode": 0,
+"windows_scancode": 31
+}]
+}

@@ -1,0 +1,38 @@
+[gd_scene load_steps=3 format=3 uid="uid://c7d8e9f0g1h2"]
+
+[ext_resource type="Script" path="res://scripts/Player.cs" id="1_ijklm"]
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_hexagon"]
+points = PackedVector2Array(0, -15, 13, -7.5, 13, 7.5, 0, 15, -13, 7.5, -13, -7.5)
+
+[node name="Player" type="RigidBody2D"]
+script = ExtResource("1_ijklm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("ConvexPolygonShape2D_hexagon")
+
+[node name="ShipHull" type="Polygon2D" parent="."]
+color = Color(0.6, 0.6, 0.7, 1)
+polygon = PackedVector2Array(0, -15, 13, -7.5, 13, 7.5, 0, 15, -13, 7.5, -13, -7.5)
+
+[node name="ShipDetails" type="Polygon2D" parent="."]
+color = Color(0.4, 0.4, 0.5, 1)
+polygon = PackedVector2Array(0, -12, 10, -6, 10, 6, 0, 12, -10, 6, -10, -6)
+
+[node name="ShipCore" type="Polygon2D" parent="."]
+color = Color(0.8, 0.8, 0.9, 1)
+polygon = PackedVector2Array(0, -6, 4, -3, 4, 3, 0, 6, -4, 3, -4, -3)
+
+[node name="Turret" type="Node2D" parent="."]
+
+[node name="TurretMount" type="Polygon2D" parent="Turret"]
+color = Color(0.3, 0.3, 0.4, 1)
+polygon = PackedVector2Array(-3, -3, 3, -3, 3, 3, -3, 3)
+
+[node name="TurretBarrel" type="Polygon2D" parent="Turret"]
+color = Color(0.25, 0.25, 0.35, 1)
+polygon = PackedVector2Array(-1, -8, 1, -8, 0.5, 3, -0.5, 3)
+
+[node name="TurretMuzzle" type="Polygon2D" parent="Turret"]
+color = Color(0.8, 0.8, 0.9, 1)
+polygon = PackedVector2Array(-1.5, -8, 1.5, -8, 0.75, -10, -0.75, -10)
