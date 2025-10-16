@@ -53,11 +53,6 @@ public partial class Player : RigidBody2D
         if (Input.IsKeyPressed(Key.D) || Input.IsActionPressed("right"))
             thrustDirection.X += 1; // Right strafe
 
-        // Debug: Check input detection
-        if (thrustDirection != Vector2.Zero)
-        {
-            GD.Print($"Thrust direction: {thrustDirection}, Velocity: {LinearVelocity}");
-        }
 
         // Apply thrust force relative to ship rotation
         if (thrustDirection != Vector2.Zero)

@@ -4,7 +4,7 @@ using System;
 public partial class StarfieldGenerator : Node2D
 {
     [Export] public int StarCount = 400;
-    [Export(PropertyHint.Range, "0.001,0.1,0.001")] public float DistantParallaxFactor = 0.02f;
+    [Export(PropertyHint.Range, "0.0,0.1,0.001")] public float DistantParallaxFactor = 0.0f;
     [Export(PropertyHint.Range, "1.0,4.0,0.1")] public float DistantStarSize = 2.5f;
     [Export(PropertyHint.Range, "0.0,1.0,0.01")] public float DistantStarSizeJitter = 0.2f;
     [Export(PropertyHint.Range, "0.0,0.5,0.01")] public float DistantStarBrightnessJitter = 0.15f;
@@ -67,14 +67,16 @@ public partial class StarfieldGenerator : Node2D
 
         for (int starIndex = 0; starIndex < StarCount; starIndex++)
         {
-            // Generate stars within a large area that covers the visible space plus margin
+            // Generate stars within a very large area for distant static stars
             float zoom = _camera?.Zoom.X ?? 1.0f;
             Vector2 viewportSize = GetViewportRect().Size;
             Vector2 visibleSize = viewportSize / zoom;
 
+            // Create a much larger area for stars to avoid wrapping
+            float starFieldSize = Mathf.Max(visibleSize.X, visibleSize.Y) * 8;
             _farLayer.Stars[starIndex] = new Vector2(
-                (float)random.NextDouble() * visibleSize.X * 4 - visibleSize.X * 2,
-                (float)random.NextDouble() * visibleSize.Y * 4 - visibleSize.Y * 2
+                (float)random.NextDouble() * starFieldSize - starFieldSize * 0.5f,
+                (float)random.NextDouble() * starFieldSize - starFieldSize * 0.5f
             );
 
             float sizeVariation = Mathf.Clamp(DistantStarSizeJitter, 0.0f, 1.0f) * DistantStarSize;
@@ -98,34 +100,23 @@ public partial class StarfieldGenerator : Node2D
         Vector2 viewportSize = GetViewportRect().Size;
         Vector2 visibleSize = viewportSize / zoom;
 
-        // Draw black background around the camera origin (node follows the camera)
-        float margin = visibleSize.Length();
-        Vector2 bgSize = visibleSize + new Vector2(margin, margin);
+        // Draw black background covering the entire visible area
+        Vector2 bgSize = visibleSize * 2; // Make it larger to ensure full coverage
         Vector2 bgPos = -bgSize * 0.5f;
         DrawRect(new Rect2(bgPos, bgSize), Colors.Black);
 
-        // Parallax offset is based on how far the camera has travelled from the origin
-        Vector2 cameraDelta = (_camera?.GlobalPosition ?? Vector2.Zero) - _parallaxOrigin;
-        float parallaxFactor = Mathf.Clamp(_farLayer.ParallaxSpeed, 0.0f, 1.0f);
-        Vector2 parallaxOffset = cameraDelta * parallaxFactor;
-
-        // Wrap bounds in local space (centered on the camera position)
-        float wrapXMin = -visibleSize.X * 1.5f;
-        float wrapXMax = visibleSize.X * 1.5f;
-        float wrapYMin = -visibleSize.Y * 1.5f;
-        float wrapYMax = visibleSize.Y * 1.5f;
-
+        // Since parallax factor is 0, stars are completely static
+        // No need for complex wrapping or parallax calculations
         for (int i = 0; i < _farLayer.Stars.Length; i++)
         {
-            Vector2 starPos = _farLayer.Stars[i] - parallaxOffset;
-
-            Vector2 wrappedPos = new Vector2(
-                Wrap(starPos.X, wrapXMin, wrapXMax),
-                Wrap(starPos.Y, wrapYMin, wrapYMax)
-            );
-
-            // Draw star
-            DrawCircle(wrappedPos, _farLayer.StarSizes[i], _farLayer.StarColors[i]);
+            Vector2 starPos = _farLayer.Stars[i];
+            
+            // Only draw stars that are within the visible area
+            if (Mathf.Abs(starPos.X) <= visibleSize.X * 0.6f && 
+                Mathf.Abs(starPos.Y) <= visibleSize.Y * 0.6f)
+            {
+                DrawCircle(starPos, _farLayer.StarSizes[i], _farLayer.StarColors[i]);
+            }
         }
     }
 
@@ -144,8 +135,9 @@ public partial class StarfieldGenerator : Node2D
         Vector2 cameraPos = _camera.GlobalPosition;
         GlobalPosition = cameraPos;
 
-        // Always redraw when the camera moves to keep parallax smooth
-        if ((cameraPos - _lastCameraPos).LengthSquared() > 0.01f)
+        // Since stars are static, we only need to redraw when the camera moves significantly
+        // to update which stars are visible
+        if ((cameraPos - _lastCameraPos).LengthSquared() > 100.0f) // Reduced frequency
         {
             QueueRedraw();
             _lastCameraPos = cameraPos;
