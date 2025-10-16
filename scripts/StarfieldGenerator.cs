@@ -8,6 +8,8 @@ public partial class StarfieldGenerator : Node2D
     [Export] public int StarsPerLayer = 150;
     [Export] public float BaseParallaxSpeed = 0.3f;
     [Export] public float LayerSpeedMultiplier = 0.5f;
+    [Export] public int BackgroundZIndex = -10000;
+    [Export] public bool UseAbsoluteZIndex = true;
 
     private class StarLayer
     {
@@ -24,6 +26,12 @@ public partial class StarfieldGenerator : Node2D
 
     public override void _Ready()
     {
+        if (UseAbsoluteZIndex)
+        {
+            ZAsRelative = false;
+            ZIndex = BackgroundZIndex;
+        }
+
         // Try to get camera reference - make it more robust
         _camera = GetNodeOrNull<CameraController>("../Camera2D");
         if (_camera == null)
