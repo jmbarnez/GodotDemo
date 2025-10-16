@@ -33,3 +33,4 @@ C:\Users\JBCry\Desktop\GodotDemo\.godot\mono\temp\obj\Debug\refint\GodotDemo.dll
 C:\Users\JBCry\Desktop\GodotDemo\.godot\mono\temp\obj\Debug\GodotDemo.pdb
 C:\Users\JBCry\Desktop\GodotDemo\.godot\mono\temp\obj\Debug\GodotDemo.genruntimeconfig.cache
 C:\Users\JBCry\Desktop\GodotDemo\.godot\mono\temp\obj\Debug\ref\GodotDemo.dll
+C:\Users\JBCry\Desktop\GodotDemo\.godot\mono\temp\obj\Debug\GodotDemo.sourcelink.json
